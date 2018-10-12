@@ -3,6 +3,8 @@
 
 #include "portaudio.h"
 
+#include "Generators/Sine.h"
+
 constexpr uint32_t SAMPLE_RATE = 44100;
 constexpr uint32_t NUM_SECONDS = 1;
 constexpr float AMPLITUDE = 0.5f;
@@ -24,6 +26,11 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 	PaStreamCallbackFlags statusFlags,
 	void *userData)
 {
+	static compx::gen::Sine sineLeftGenerator{};
+	static compx::gen::Sine sineRightGenerator{};
+	sineLeftGenerator.set_freq(261.626f);
+	sineRightGenerator.set_freq(311.127f);
+
 	/* Cast data passed through stream to our structure. */
 	paTestData *data = (paTestData*)userData;
 	float *out = (float*)outputBuffer;
@@ -32,15 +39,19 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 
 	for (i = 0; i<framesPerBuffer; i++)
 	{
-		*out++ = data->left_phase * AMPLITUDE;  /* left */
-		*out++ = data->right_phase * AMPLITUDE;  /* right */
-									 /* Generate simple sawtooth phaser that ranges between -1.0 and 1.0. */
-		data->left_phase += 0.01f;
-		/* When signal reaches top, drop back down. */
-		if (data->left_phase >= 1.0f) data->left_phase -= 2.0f;
-		/* higher pitch so we can distinguish left and right. */
-		data->right_phase += 0.03f;
-		if (data->right_phase >= 1.0f) data->right_phase -= 2.0f;
+		sineLeftGenerator.tick();
+		sineRightGenerator.tick();
+		*out++ = sineLeftGenerator.value() * AMPLITUDE;
+		*out++ = sineRightGenerator.value() * AMPLITUDE;
+		//*out++ = data->left_phase * AMPLITUDE;  /* left */
+		//*out++ = data->right_phase * AMPLITUDE;  /* right */
+		//							 /* Generate simple sawtooth phaser that ranges between -1.0 and 1.0. */
+		//data->left_phase += 0.01f;
+		///* When signal reaches top, drop back down. */
+		//if (data->left_phase >= 1.0f) data->left_phase -= 2.0f;
+		///* higher pitch so we can distinguish left and right. */
+		//data->right_phase += 0.03f;
+		//if (data->right_phase >= 1.0f) data->right_phase -= 2.0f;
 	}
 	return 0;
 }

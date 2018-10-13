@@ -27,6 +27,10 @@ public:
 		m_phase = m_sequence.size();
 	}
 
+	auto setSustainPhase(size_t id) {
+		m_sustainPhase = id;
+	}
+
 	// Start playing the envelope.
 	// The offset value of the first phase acts as a delay,
 	// and the envelope will generate the base value until

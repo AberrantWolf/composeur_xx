@@ -8,7 +8,9 @@
 
 constexpr uint32_t SAMPLE_RATE = 44100;
 constexpr uint32_t NUM_SECONDS = 1;
-constexpr float AMPLITUDE = 0.5f;
+constexpr float AMPLITUDE = 0.8f;
+
+volatile bool working = true;
 
 typedef struct
 {
@@ -27,6 +29,8 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 	PaStreamCallbackFlags statusFlags,
 	void *userData)
 {
+	static long counter = 0;
+
 	/* Cast data passed through stream to our structure. */
 	paTestData *data = (paTestData*)userData;
 	float *out = (float*)outputBuffer;
@@ -39,7 +43,13 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 		data->right_env.tick();
 		*out++ = data->left_env.value() * AMPLITUDE;
 		*out++ = data->right_env.value() * AMPLITUDE;
+		++counter;
 	}
+
+	if (counter > 88200) {
+		working = false;
+	}
+
 	return 0;
 }
 
@@ -62,11 +72,26 @@ void main() {
 
 	// set up envelope effects
 	data.left_env = compx::fx::Envelope();
-	data.right_env = compx::fx::Envelope();
-	data.left_env.set_base(1.0f);
-	data.right_env.set_base(1.0f);
+	//data.left_env.set_base(1.0f);
 	data.left_env.set_source(left_sine);
+	data.left_env.appendPhase({ 0.00f, 0.0f });
+	data.left_env.appendPhase({ 0.05f, 1.0f });
+	data.left_env.appendPhase({ 0.15f, 0.6f });
+	data.left_env.appendPhase({ 0.35f, 0.0f });
+	data.left_env.setSustainPhase(999);
+	data.left_env.start();
+	//data.left_env.release();
+
+	data.right_env = compx::fx::Envelope();
+	//data.right_env.set_base(1.0f);
 	data.right_env.set_source(right_sine);
+	data.right_env.appendPhase({ 1.00f, 0.0f });
+	data.right_env.appendPhase({ 0.05f, 1.0f });
+	data.right_env.appendPhase({ 0.15f, 0.6f });
+	data.right_env.appendPhase({ 0.35f, 0.0f });
+	data.right_env.setSustainPhase(999);
+	data.right_env.start();
+	//data.right_env.release();
 
 	PaStream* stream;
 	err = Pa_OpenDefaultStream(
@@ -92,7 +117,8 @@ void main() {
 		return;
 	}
 
-	Pa_Sleep(1000 * NUM_SECONDS);
+	//Pa_Sleep(1000 * NUM_SECONDS);
+	while (working);
 
 	err = Pa_StopStream(stream);
 	if (err != paNoError) {

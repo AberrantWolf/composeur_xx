@@ -62,6 +62,7 @@ public:
 			return std::get<1>(attribute)->value();;
 			break;
 		}
+		return 0.0f;
 	}
 
 	auto set(float f) {

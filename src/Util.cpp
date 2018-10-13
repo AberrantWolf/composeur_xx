@@ -1,3 +1,3 @@
 #include "Util.h"
 
-float compx::util::SAMPLE_RATE = 44'100.0f;
+compx::util::Rate compx::util::SAMPLE_RATE = 44'100.0f;

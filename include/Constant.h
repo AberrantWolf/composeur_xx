@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../IGenerator.h"
+#include "IGenerator.h"
 
 namespace compx {
 namespace gen {
@@ -10,11 +10,11 @@ public:
 	Constant() : m_value(0.0f) {}
 	Constant(float v) : m_value(v) {}
 
-	virtual auto tick() -> TickResult override {
+	virtual auto do_tick() -> TickResult override {
 		return m_value.tick();
 	}
 
-	virtual auto value() -> float override {
+	virtual auto calc_value() -> float override {
 		return m_value.get();
 	}
 

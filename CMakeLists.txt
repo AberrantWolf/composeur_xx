@@ -1,33 +1,38 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.10.3)
 project("ComposeurXX")
 
 add_subdirectory(thirdparty)
 
 set(HEADER_PATH include)
-set(GENERATORS
-	${HEADER_PATH}/Generators/Constant.h
-	${HEADER_PATH}/Generators/Sine.h
-	${HEADER_PATH}/Generators/Triangle.h
-	${HEADER_PATH}/Generators/Sawtooth.h
+set(OSCILLATORS
+	${HEADER_PATH}/Oscillators/Sine.h
+	${HEADER_PATH}/Oscillators/Triangle.h
+	${HEADER_PATH}/Oscillators/Sawtooth.h
+	)
+set(EFFECTS
+	${HEADER_PATH}/Effects/Envelope.h
 	)
 set(HEADERS
 	${HEADER_PATH}/Util.h
 	${HEADER_PATH}/IGenerator.h
-	${HEADER_PATH}/AdsrEnvelope.h
 	${HEADER_PATH}/Instrument.h
-	${GENERATORS}
+	${OSCILLATORS}
+	${EFFECTS}
 	)
 
 set(SOURCES
 	src/Util.cpp
 	src/main.cpp
-	src/Generators/Sine.cpp
+	src/Oscillators/Sine.cpp
+	src/Effects/Envelope.cpp
 	)
 
 add_executable(ComposeurXX
 	${SOURCES}
 	${HEADERS}
 	)
+
+set_property(TARGET ComposeurXX PROPERTY CXX_STANDARD 17)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX "Source Files" FILES ${SOURCES})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/include PREFIX "Header Files" FILES ${HEADERS})

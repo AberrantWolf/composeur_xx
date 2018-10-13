@@ -1,9 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <utility>
+#include <variant>
 
 namespace compx {
-namespace gen {
 
 enum class TickResult {
 	OK,
@@ -16,56 +17,67 @@ class IGenerator {
 public:
 	virtual ~IGenerator() {}
 
-	virtual auto tick() -> TickResult = 0;
-	virtual auto value() -> float = 0;
+	virtual auto tick() -> TickResult final {
+		m_cacheIsValid = false;
+		return do_tick();
+	};
+	virtual auto value() -> float final {
+		if (!m_cacheIsValid) {
+			m_cache = calc_value();
+			m_cacheIsValid = true;
+		}
+		return m_cache;
+	};
+
+protected:
+	virtual auto do_tick() -> TickResult = 0;
+	virtual auto calc_value() -> float = 0;
+
+private:
+	float m_cache;
+	bool m_cacheIsValid;
 };
 
 using GenPtr = std::shared_ptr<IGenerator>;
+using AttrValue = std::variant<float, GenPtr>;
 
 struct GenAttr {
+	auto somefunct() {
+		AttrValue v{ GenPtr {} };
+		v = 5.0f;
+	}
 private:
-	union AttrValue {
-		float value;
-		GenPtr generator;
-
-		AttrValue(float f) : value(f) {}
-		AttrValue(GenPtr g) : generator(g) {}
-		~AttrValue() {}
-	} attribute;
-
-	enum {
-		VALUE,
-		GENERATOR,
-	} type;
+	AttrValue attribute;
 
 public:
-	GenAttr(float f) : attribute(f), type(VALUE) {}
-	GenAttr(GenPtr g) : attribute(g), type(GENERATOR) {}
+	GenAttr() : attribute(0.0f) {}
+	GenAttr(float f) : attribute(f) {}
+	GenAttr(GenPtr g) : attribute(g) {}
 
 	auto get() -> float {
-		switch (type) {
-		case VALUE:
-			return attribute.value;
+		switch (attribute.index()) {
+		case 0:
+			return std::get<0>(attribute);
+		case 1:
+			return std::get<1>(attribute)->value();;
 			break;
-		case GENERATOR:
-			return attribute.generator->value();
 		}
 	}
 
 	auto set(float f) {
-		attribute.value = f;
+		attribute = f;
 	}
 	
 	auto set(GenPtr gen) {
-		attribute.generator = gen;
+		attribute = gen;
 	}
 
 	auto tick() -> TickResult {
-		switch (type) {
-		case VALUE:
+		switch (attribute.index()) {
+		case 0:
 			break;
-		case GENERATOR:
-			return attribute.generator->tick();
+		case 1:
+			return std::get<1>(attribute)->tick();
 			break;
 		default:
 			return TickResult::UNKNOWN;
@@ -81,5 +93,4 @@ public:\
 	auto set_##ATTR_NAME(float f) {m_##ATTR_NAME.set(f);}\
 	auto set_##ATTR_NAME(GenPtr g) {m_##ATTR_NAME.set(g);}
 
-} // namespace gen
 } // namespace compx

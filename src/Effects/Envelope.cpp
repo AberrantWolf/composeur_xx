@@ -8,9 +8,9 @@ namespace fx {
 
 uint32_t count = 0;
 
-auto Envelope::do_tick() -> TickResult {
-	m_base.tick();
-	m_source.tick();
+auto Envelope::do_tick(size_t id) -> TickResult {
+	m_base.tick(id);
+	m_source.tick(id);
 
 	if (m_phase >= m_sequence.size()) {
 		return TickResult::OK;

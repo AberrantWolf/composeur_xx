@@ -17,9 +17,13 @@ class IGenerator {
 public:
 	virtual ~IGenerator() {}
 
-	virtual auto tick() -> TickResult final {
+	virtual auto tick(size_t id) -> TickResult final {
+		if (id == m_lastTick) {
+			return TickResult::OK;
+		}
 		m_cacheIsValid = false;
-		return do_tick();
+		m_lastTick = id;
+		return do_tick(id);
 	};
 	virtual auto value() -> float final {
 		if (!m_cacheIsValid) {
@@ -30,10 +34,11 @@ public:
 	};
 
 protected:
-	virtual auto do_tick() -> TickResult = 0;
+	virtual auto do_tick(size_t id) -> TickResult = 0;
 	virtual auto calc_value() -> float = 0;
 
 private:
+	size_t m_lastTick;
 	float m_cache;
 	bool m_cacheIsValid;
 };
@@ -73,12 +78,12 @@ public:
 		attribute = gen;
 	}
 
-	auto tick() -> TickResult {
+	auto tick(size_t id) -> TickResult {
 		switch (attribute.index()) {
 		case 0:
 			break;
 		case 1:
-			return std::get<1>(attribute)->tick();
+			return std::get<1>(attribute)->tick(id);
 			break;
 		default:
 			return TickResult::UNKNOWN;
@@ -89,7 +94,7 @@ public:
 };
 
 #define DECL_GENATTR(ATTR_NAME) \
-private: GenAttr m_##ATTR_NAME;\
+protected: GenAttr m_##ATTR_NAME;\
 public:\
 	auto set_##ATTR_NAME(float f) {m_##ATTR_NAME.set(f);}\
 	auto set_##ATTR_NAME(GenPtr g) {m_##ATTR_NAME.set(g);}

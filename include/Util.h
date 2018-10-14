@@ -3,6 +3,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include <string>
+
 namespace compx {
 namespace util {
 
@@ -26,6 +28,8 @@ private:
 extern Rate SAMPLE_RATE;
 
 constexpr auto M_TAU_F = static_cast<float>(2 * M_PI);
+
+auto get_pitch_from_note(std::string note_string) -> float;
 
 }
 }

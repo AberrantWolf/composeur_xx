@@ -3,12 +3,13 @@
 #include <utility>
 #include <vector>
 
-#include "IGenerator.h"
+#include "Interfaces/IControllable.h"
+#include "Interfaces/IGenerator.h"
 
 namespace compx {
 namespace fx {
 
-class Envelope : public IGenerator {
+class Envelope : public control::IControllable, public IGenerator {
 public:
 	struct EnvPhase {
 		float offset;
@@ -17,7 +18,7 @@ public:
 
 	Envelope() : m_base(0.0f), m_source(0.0f) {}
 
-	virtual auto do_tick()->TickResult override;
+	virtual auto do_tick(size_t id)->TickResult override;
 	virtual auto calc_value() -> float override;
 
 	// Append a phase to the end of the sequence.
@@ -35,7 +36,7 @@ public:
 	// The offset value of the first phase acts as a delay,
 	// and the envelope will generate the base value until
 	// the delay has elapsed.
-	auto start() {
+	auto start() -> void override {
 		m_phase = 0;
 		m_phaseTime = 0.0f;
 		m_holding = true;
@@ -43,7 +44,7 @@ public:
 
 	// Jumps from wherever the envelope currently is to the last
 	// phase in the sequence, and will blend between the phases.
-	auto release() {
+	auto release() -> void override {
 		m_holding = false;
 		auto size = m_sequence.size();
 		if (size > 1) {
@@ -53,7 +54,7 @@ public:
 	}
 
 	// Jumps to the end of the sequence and plays the base value.
-	auto end() {
+	auto end() -> void override{
 		m_holding = false;
 		m_phase = m_sequence.size();
 	}

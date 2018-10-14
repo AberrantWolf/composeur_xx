@@ -4,10 +4,10 @@
 namespace compx {
 namespace osc {
 
-auto Sine::do_tick() -> TickResult {
-	m_min.tick();
-	m_max.tick();
-	m_freq.tick();
+auto Sine::do_tick(size_t id) -> TickResult {
+	m_min.tick(id);
+	m_max.tick(id);
+	m_freq.tick(id);
 
 	return TickResult::OK;
 }

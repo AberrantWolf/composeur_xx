@@ -21,16 +21,18 @@ set (INTERFACES
 set(HEADERS
 	${HEADER_PATH}/Util.h
 	${HEADER_PATH}/Instrument.h
+	${HEADER_PATH}/Sequence.h
 	${EFFECTS}
 	${INTERFACES}
 	${OSCILLATORS}
 	)
 
 set(SOURCES
-	src/Util.cpp
 	src/main.cpp
-	src/Oscillators/Sine.cpp
 	src/Effects/Envelope.cpp
+	src/Oscillators/Sine.cpp
+	src/Sequence.cpp
+	src/Util.cpp
 	)
 
 add_executable(ComposeurXX

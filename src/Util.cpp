@@ -48,7 +48,6 @@ auto compx::util::get_pitch_from_note(std::string note_string) -> float {
 
 
 octave:
-	note = note % note_count;
 	auto octave_string = note_string.substr(idx, note_string.size() - idx);
 	if (octave_string.size() < 1) {
 		return -1;

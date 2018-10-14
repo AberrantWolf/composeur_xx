@@ -6,6 +6,7 @@
 #include "Effects/Envelope.h"
 #include "Instrument.h"
 #include "Oscillators/Sine.h"
+#include "Sequence.h"
 #include "Util.h"
 
 constexpr uint32_t SAMPLE_RATE = 44100;
@@ -16,7 +17,7 @@ volatile bool working = true;
 
 typedef struct
 {
-	std::shared_ptr<compx::Instrument> instr;
+	std::shared_ptr<compx::music::Sequence> sequence;
 }
 paTestData;
 
@@ -40,35 +41,17 @@ static int patestCallback(const void *inputBuffer, void *outputBuffer,
 
 	for (i = 0; i<framesPerBuffer; i++)
 	{
-		data->instr->tick(counter);
-		*out++ = data->instr->value() * AMPLITUDE;
-		*out++ = data->instr->value() * AMPLITUDE;
+		auto result = data->sequence->tick(counter);
+		if (result == compx::TickResult::COMPLETE) {
+			working = false;
+
+			*out++ = 0.0f;
+			*out++ = 0.0f;
+			continue;
+		}
+		*out++ = data->sequence->value() * AMPLITUDE;
+		*out++ = data->sequence->value() * AMPLITUDE;
 		++counter;
-	}
-
-	static bool need_change = true;
-	if (counter >= 44100 && need_change) {
-		data->instr->set_note("Eb4");
-		data->instr->start();
-		need_change = false;
-	}
-
-	static bool need_change2 = true;
-	if (counter >= 88200 && need_change2) {
-		data->instr->set_note("B4");
-		data->instr->start();
-		need_change2 = false;
-	}
-
-	static bool need_change3 = true;
-	if (counter >= 132'300 && need_change3) {
-		data->instr->set_note("C5");
-		data->instr->start();
-		need_change3 = false;
-	}
-
-	if (counter > 176'400) {
-		working = false;
 	}
 
 	return 0;
@@ -103,7 +86,6 @@ void main() {
 
 	// Make an instrument
 	auto instrument = std::make_shared<compx::Instrument>();
-	data.instr = instrument;
 
 	// set up sine generators
 	auto core_sine = std::make_shared<compx::osc::Sine>();
@@ -116,7 +98,7 @@ void main() {
 	instrument->add_tone(tertiary_sine, 3.04f, 0.2f);
 	instrument->add_tone(quaternary_sine, 1.5f, 0.05f);
 
-	instrument->set_note("C4");
+	//instrument->set_note("C4");
 
 	// set up envelope effects
 	auto envelope = instrument->get_envelope();
@@ -128,6 +110,40 @@ void main() {
 	envelope->appendPhase({ 0.15f, 0.0f });
 	envelope->setSustainPhase(999);
 	instrument->start();
+
+	auto sequence = std::make_shared<compx::music::Sequence>(80.0f, compx::music::TimeSignature{4, 4});
+	data.sequence = sequence;
+
+	sequence->set_instrument(instrument);
+
+	sequence->play_note(compx::music::Note{ std::string("C4"), compx::music::QUARTER_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Eb4"), compx::music::QUARTER_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE, 1 });
+	sequence->play_note(compx::music::Note{ std::string("Eb4"), compx::music::EIGHTH_NOTE, 1 });
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE });
+	//
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Ab4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::SIXTEENTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::SIXTEENTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::QUARTER_NOTE });
+	//
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::QUARTER_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::QUARTER_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("C5"), compx::music::EIGHTH_NOTE, 1 });
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::EIGHTH_NOTE, 1 });
+	sequence->play_note(compx::music::Note{ std::string("F4"), compx::music::EIGHTH_NOTE});
+	//
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("G4"), compx::music::EIGHTH_NOTE });
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::EIGHTH_NOTE });
+	//
+	sequence->play_note(compx::music::Note{ std::string("Bb4"), compx::music::EIGHTH_NOTE, 1 });
+	sequence->play_note(compx::music::Note{ std::string("C5"), compx::music::HALF_NOTE });
 
 	PaStream* stream;
 	err = Pa_OpenDefaultStream(
